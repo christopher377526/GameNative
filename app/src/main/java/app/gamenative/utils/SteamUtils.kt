@@ -252,12 +252,12 @@ object SteamUtils {
         }
 
         val imageFs = ImageFs.find(context)
-        val downloaded = File(imageFs.getFilesDir(), "experimental-drm-20260116.tzst")
         TarCompressorUtils.extract(
             TarCompressorUtils.Type.ZSTD,
-            downloaded,
+            context.assets,
+            "experimental-drm.tzst",
             imageFs.getRootDir(),
-        )
+        );
         putBackSteamDlls(appDirPath)
         restoreUnpackedExecutable(context, steamAppId)
 
