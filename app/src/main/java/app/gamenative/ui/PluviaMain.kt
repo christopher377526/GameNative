@@ -1409,7 +1409,7 @@ fun preLaunchApp(
         SplitCompat.install(context)
         try {
             if (!SteamService.isImageFsInstallable(context, container.containerVariant)) {
-                setLoadingMessage("Downloading first-time files")
+                setLoadingMessage("Downloading first-time files${if(container.containerVariant.equals(Container.GLIBC)) " (1/2)" else ""}")
                 SteamService.downloadImageFs(
                     onDownloadProgress = { setLoadingProgress(it / 1.0f) },
                     this,
@@ -1420,63 +1420,13 @@ fun preLaunchApp(
             if (container.containerVariant.equals(Container.GLIBC) &&
                 !SteamService.isFileInstallable(context, "imagefs_patches_gamenative.tzst")
             ) {
-                setLoadingMessage("Downloading Wine")
+                setLoadingMessage("Downloading first-time files (2/2)")
                 SteamService.downloadImageFsPatches(
                     onDownloadProgress = { setLoadingProgress(it / 1.0f) },
                     this,
                     context = context,
                 ).await()
-            } else {
-                if (container.wineVersion.contains("proton-9.0-arm64ec") &&
-                    !SteamService.isFileInstallable(context, "proton-9.0-arm64ec.txz")
-                ) {
-                    setLoadingMessage("Downloading arm64ec Proton")
-                    SteamService.downloadFile(
-                        onDownloadProgress = { setLoadingProgress(it / 1.0f) },
-                        this,
-                        context = context,
-                        "proton-9.0-arm64ec.txz",
-                    ).await()
-                } else if (container.wineVersion.contains("proton-9.0-x86_64") &&
-                    !SteamService.isFileInstallable(context, "proton-9.0-x86_64.txz")
-                ) {
-                    setLoadingMessage("Downloading x86_64 Proton")
-                    SteamService.downloadFile(
-                        onDownloadProgress = { setLoadingProgress(it / 1.0f) },
-                        this,
-                        context = context,
-                        "proton-9.0-x86_64.txz",
-                    ).await()
-                }
-                if (container.wineVersion.contains("proton-9.0-x86_64") || container.wineVersion.contains("proton-9.0-arm64ec")) {
-                    val protonVersion = container.wineVersion
-                    val imageFs = ImageFs.find(context)
-                    val outFile = File(imageFs.rootDir, "/opt/$protonVersion")
-                    val binDir = File(outFile, "bin")
-                    if (!binDir.exists() || !binDir.isDirectory) {
-                        Timber.i("Extracting $protonVersion to /opt/")
-                        setLoadingMessage("Extracting $protonVersion")
-                        setLoadingProgress(-1f)
-                        val downloaded = File(imageFs.getFilesDir(), "$protonVersion.txz")
-                        TarCompressorUtils.extract(
-                            TarCompressorUtils.Type.XZ,
-                            downloaded,
-                            outFile,
-                        )
-                    }
-                }
-            }
-
-            if (!container.isUseLegacyDRM && !container.isLaunchRealSteam &&
-                !SteamService.isFileInstallable(context, "experimental-drm-20260116.tzst")
-            ) {
-                setLoadingMessage("Downloading extras")
-                SteamService.downloadFile(
-                    onDownloadProgress = { setLoadingProgress(it / 1.0f) },
-                    this,
-                    context = context,
-                    "experimental-drm-20260116.tzst",
-                ).await()
+            
             }
             if (container.isLaunchRealSteam && !SteamService.isFileInstallable(context, "steam.tzst")) {
                 setLoadingMessage(context.getString(R.string.main_downloading_steam))
